@@ -10,6 +10,9 @@ TOP_BUILD_DIR := $(TOPDIR)/build
 CROSS_COMPILE := /opt/toolchain-mipsel_24kc_gcc-5.4.0_musl-1.1.24/bin/mipsel-openwrt-linux-
 export CROSS_COMPILE
 STAGE3_PAYLOAD := $(TOPDIR)/u-boot-lzma.img
+export STAGE3_PAYLOAD
+_4K_PAGE_SUPPORT := 0
+export _4K_PAGE_SUPPORT
 TOOLS_DIR := $(TOP_BUILD_DIR)/tools
 export TOOLS_DIR
 

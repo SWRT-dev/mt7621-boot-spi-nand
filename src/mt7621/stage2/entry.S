@@ -45,7 +45,7 @@ EXPORT(_dramc_init_type)
 EXPORT(_dramc_ddr2_act_sel)
 	.word	2
 EXPORT(_dramc_ddr3_act_sel)
-	.word	3
+	.word	2
 EXPORT(_dramc_ddr2_act)
 	.word	0, 0, 0, 0, 0, 0, 0, 0
 	.word	0, 0, 0, 0, 0, 0, 0, 0

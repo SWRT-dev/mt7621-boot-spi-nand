@@ -17,7 +17,7 @@ void __noreturn stage1_main(void)
 {
 	target_init();
 
-	puts("Bootcode for Micron SPI-NAND [Version 1.0]\n");
+	puts("Bootcode for SPI-NAND [Version 1.0]\n");
 	puts("Copyright (C) 2019 Weijie Gao <hackpascal@gmail.com>\n");
 	puts("\n");
 

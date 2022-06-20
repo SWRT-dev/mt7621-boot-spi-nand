@@ -90,11 +90,16 @@ struct spi_nand_info {
 #define SPI_NAND_MEMORG_4G_4K_256	SPI_NAND_MEMORG(4096, 256, 64, 2048, 1, 1)
 #define SPI_NAND_MEMORG_4G_2K_128_2P_2D	SPI_NAND_MEMORG(2048, 128, 64, 2048, 2, 2)
 #define SPI_NAND_MEMORG_8G_4K_256_2D	SPI_NAND_MEMORG(4096, 256, 64, 2048, 1, 2)
+#define SPI_NAND_MEMORG_2G_2K_64	SPI_NAND_MEMORG(2048, 64, 64, 2048, 1, 1)
 
 static int micron_select_die(uint32_t dieidx);
+static int mxic_select_die(uint32_t dieidx){ return 0; };
 
 static const int8_t ecc_bitflips_2[] = { 0, 4, -1, -1 };
 static const int8_t ecc_bitflips_3[] = { 0, 3, -1, 6, -1, 8, -1, -1 };
+static const int8_t ecc_bitflips_4[] = { 0, 8, -1, -1 };
+
+static int needed_eccsr = 0;
 
 static const struct spi_nand_info spi_nand_ids[] = {
 	SPI_NAND_INFO("MT29F1G01AAADD", SPI_NAND_ID(0x2c, 0x12),
@@ -117,6 +122,10 @@ static const struct spi_nand_info spi_nand_ids[] = {
 		      SPI_NAND_MEMORG_8G_4K_256_2D,
 		      SPI_NAND_ECCCFG(6, 4, ecc_bitflips_3),
 		      micron_select_die),
+	SPI_NAND_INFO("MX35LF2GE4AD", SPI_NAND_ID(0xc2, 0x26),
+		     SPI_NAND_MEMORG_2G_2K_64,
+		     SPI_NAND_ECCCFG(6, 4, ecc_bitflips_4),
+		     mxic_select_die),
 };
 
 static const struct spi_nand_info *spi_nand_chip;
@@ -287,10 +296,25 @@ static void spi_nand_read_page_cache(uint32_t ca, void *buf, uint32_t len)
 	spi_dis();
 }
 
+static int mx35lf1ge4ab_get_eccsr(uint8_t *eccsr)
+{
+	*eccsr = spi_nand_get_feature(0x7c);
+	*eccsr &= 0x0F;
+	return 0;
+}
+
 static int spi_nand_get_ecc_status(void)
 {
 	uint8_t val = spi_nand_get_feature(SPI_NAND_FEATURE_STATUS);
 	uint32_t ecc_status = (val & eccmask) >> eccshift;
+
+	if (needed_eccsr == 1) {
+		uint8_t eccsr;
+		if (mx35lf1ge4ab_get_eccsr(&eccsr) || eccsr > 8 || eccsr == 0)
+			ecc_status = 8;
+		else
+			return eccsr;
+	}
 
 	if (ecc_bitflips[ecc_status] < 0)
 		return -EBADMSG;
@@ -361,6 +385,8 @@ int spi_nand_load_init(void)
 		fid = &spi_nand_ids[i].id;
 
 		if (!memcmp(fid->id, id, fid->len)) {
+			if (id[0] == 0xc2)
+				needed_eccsr = 1;
 			spi_nand_chip = &spi_nand_ids[i];
 			break;
 		}
